@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1920, initial-scale=1.0">
-<title>Anime Bot UI 1920x1200</title>
+<title>BotsKingdoms AnimeBot</title>
 
 <style>
     body{
@@ -14,87 +14,117 @@
         align-items:center;
         height:100vh;
         overflow:hidden;
+        font-family:"Poppins", sans-serif;
     }
 
-    /* FIXED SIZE DISPLAY */
+    /* Main UI Frame */
     .screen{
         width:1920px;
         height:1200px;
-        background:#fff6ee;
-        display:flex;
-        flex-direction:column;
+        background:#0e0e0e;
         overflow:hidden;
-        border-radius:10px;
+        position:relative;
     }
 
-    /* SEARCH BAR */
-    .search_box{
+    /* Search Bar */
+    .searchbar{
         width:100%;
         text-align:center;
-        padding:25px 0;
-        border-bottom:2px solid #e7d8c8;
-        background:white;
+        padding:30px 0;
+        background:#111;
+        border-bottom:2px solid #202020;
     }
-    .search_box input{
-        width:700px;
+    .searchbar input{
+        width:650px;
+        padding:18px 30px;
+        border-radius:50px;
+        border:none;
+        background:#181818;
+        color:#fff;
         font-size:22px;
-        padding:14px 22px;
-        border-radius:40px;
-        border:2px solid #000;
         outline:none;
+        box-shadow:0 0 10px rgba(0,255,255,.3);
     }
 
-    /* MAIN LAYOUT EXACT LIKE YOU WANT */
-    .content{
+    /* Layout 2 Panels */
+    .main{
         display:flex;
         width:1920px;
-        height:1100px;
+        height:1070px;
     }
 
-    /* LEFT IMAGE AREA */
-    .left-img{
-        width:960px;
-        height:1100px;
+    /* Left Image Show */
+    .left{
+        width:55%;
+        height:1070px;
+        background:#000;
     }
-    .left-img img{
+    .left img{
         width:100%;
         height:100%;
         object-fit:cover;
+        filter:brightness(.95);
     }
 
-    /* RIGHT PANEL */
-    .right-info{
-        width:960px;
+    /* Right Info Box */
+    .right{
+        width:45%;
         padding:130px 100px;
+        color:#fff;
         display:flex;
         flex-direction:column;
         justify-content:center;
     }
 
-    .title{
-        font-size:75px;
-        font-weight:900;
-        margin-bottom:30px;
+    /* Neon Title */
+    #title{
+        font-size:68px;
+        font-weight:800;
+        text-shadow:0 0 20px cyan;
+        margin-bottom:35px;
     }
 
-    .desc{
-        font-size:24px;
-        line-height:1.7;
-        opacity:.8;
+    /* Glass Description Panel */
+    #desc{
+        font-size:22px;
+        opacity:.9;
+        line-height:1.6;
         width:90%;
+        padding:30px;
+        border-radius:20px;
+        backdrop-filter:blur(18px);
+        background:rgba(255,255,255,.08);
         margin-bottom:50px;
     }
 
-    .watch-btn{
-        background:black;
-        color:white;
-        padding:20px 55px;
-        border-radius:40px;
-        font-size:28px;
-        font-weight:700;
+    /* Big Glowing Button */
+    .btn{
+        padding:20px 65px;
+        background:linear-gradient(90deg,#00ffff,#0070ff);
+        color:black;
+        font-weight:800;
         border:none;
+        font-size:30px;
+        border-radius:60px;
         cursor:pointer;
-        width:fit-content;
+        transition:.3s;
+    }
+    .btn:hover{
+        transform:scale(1.08);
+        box-shadow:0 0 30px cyan;
+    }
+
+    /* Footer Branding */
+    .brand{
+        position:absolute;
+        bottom:25px;
+        right:35px;
+        font-size:26px;
+        color:#0ff;
+        opacity:.9;
+        font-weight:700;
+        letter-spacing:2px;
+        text-shadow:0 0 18px cyan;
     }
 
 </style>
@@ -103,27 +133,27 @@
 
 <div class="screen">
 
-    <!-- SEARCH BAR -->
-    <div class="search_box">
-        <input id="animeInput" placeholder="Type anime name — Example: One Piece"
-               onkeydown="if(event.key==='Enter') loadAnime(animeInput.value)">
+    <div class="searchbar">
+        <input id="anime" placeholder=" Type Anime Name & Press ENTER "
+               onkeydown="if(event.key==='Enter')loadAnime(anime.value)">
     </div>
 
-    <!-- MAIN UI -->
-    <div class="content">
-        <div class="left-img"><img id="mainImg" src=""></div>
+    <div class="main">
+        <div class="left">
+            <img id="poster" src="">
+        </div>
 
-        <div class="right-info">
-            <h1 id="title" class="title">Type Anime Name</h1>
-            <p id="desc" class="desc">The page updates automatically.</p>
-            <button class="watch-btn">WATCH NOW</button>
+        <div class="right">
+            <h1 id="title">BotsKingdoms AnimeBot</h1>
+            <p id="desc">Type an anime name above to generate full profile instantly.</p>
+            <button class="btn">Open Anime</button>
         </div>
     </div>
 
+    <div class="brand">Powered By BotsKingdoms 👑</div>
 </div>
 
 
-<!-- API FETCH -->
 <script>
 async function loadAnime(name){
     const q = `
@@ -136,17 +166,22 @@ async function loadAnime(name){
         }
     }`;
 
-    const res = await fetch("https://graphql.anilist.co",{
+    let res = await fetch("https://graphql.anilist.co",{
         method:"POST",
-        headers:{"Content-Type":"application/json"},
+        headers:{ "Content-Type":"application/json" },
         body:JSON.stringify({query:q,variables:{search:name}})
     });
 
-    const a = (await res.json()).data.Media;
+    let a = (await res.json()).data.Media;
 
-    document.getElementById("title").innerText = a.title.english || a.title.romaji;
-    document.getElementById("desc").innerHTML = a.description.slice(0,650)+"...";
-    document.getElementById("mainImg").src = a.bannerImage || a.coverImage.extraLarge;
+    document.getElementById("title").innerText =
+        a.title.english || a.title.romaji;
+
+    document.getElementById("desc").innerHTML =
+        a.description.slice(0,800)+"...";
+
+    document.getElementById("poster").src =
+        a.bannerImage || a.coverImage.extraLarge;
 }
 </script>
 
