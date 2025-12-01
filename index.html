@@ -2,27 +2,59 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Anime Showcase</title>
+<meta name="viewport" content="width=1920, initial-scale=1.0">
+<title>Anime Bot UI 1920x1200</title>
 
 <style>
     body{
         margin:0;
-        font-family: 'Poppins', sans-serif;
-        background:#fff6ee;  /* soft peach like screenshot */
-        overflow-x:hidden;
-    }
-
-    .anime-page{
+        background:#000;
         display:flex;
+        justify-content:center;
+        align-items:center;
         height:100vh;
-        width:100%;
+        overflow:hidden;
     }
 
-    /* LEFT SIDE IMAGE */
+    /* FIXED SIZE DISPLAY */
+    .screen{
+        width:1920px;
+        height:1200px;
+        background:#fff6ee;
+        display:flex;
+        flex-direction:column;
+        overflow:hidden;
+        border-radius:10px;
+    }
+
+    /* SEARCH BAR */
+    .search_box{
+        width:100%;
+        text-align:center;
+        padding:25px 0;
+        border-bottom:2px solid #e7d8c8;
+        background:white;
+    }
+    .search_box input{
+        width:700px;
+        font-size:22px;
+        padding:14px 22px;
+        border-radius:40px;
+        border:2px solid #000;
+        outline:none;
+    }
+
+    /* MAIN LAYOUT EXACT LIKE YOU WANT */
+    .content{
+        display:flex;
+        width:1920px;
+        height:1100px;
+    }
+
+    /* LEFT IMAGE AREA */
     .left-img{
-        width:50%;
-        height:100vh;
+        width:960px;
+        height:1100px;
     }
     .left-img img{
         width:100%;
@@ -30,133 +62,92 @@
         object-fit:cover;
     }
 
-    /* RIGHT SIDE CONTENT */
+    /* RIGHT PANEL */
     .right-info{
-        width:50%;
-        padding:80px 60px;
+        width:960px;
+        padding:130px 100px;
         display:flex;
         flex-direction:column;
         justify-content:center;
     }
 
-    .site-logo{
-        font-size:22px;
-        font-weight:600;
-        letter-spacing:2px;
-        opacity:0.7;
-        margin-bottom:10px;
-    }
-
-    .title-text{
-        font-size:60px;
+    .title{
+        font-size:75px;
         font-weight:900;
-        margin:0 0 25px;
+        margin-bottom:30px;
     }
 
-    .desc-text{
-        width:85%;
+    .desc{
+        font-size:24px;
         line-height:1.7;
-        font-size:18px;
-        opacity:0.7;
-        margin-bottom:35px;
+        opacity:.8;
+        width:90%;
+        margin-bottom:50px;
     }
 
-    /* BUTTON */
     .watch-btn{
-        font-size:20px;
-        padding:14px 40px;
         background:black;
         color:white;
-        border:none;
+        padding:20px 55px;
         border-radius:40px;
+        font-size:28px;
+        font-weight:700;
+        border:none;
         cursor:pointer;
-        width:max-content;
-        transition:.3s;
-        font-weight:600;
-    }
-    .watch-btn:hover{
-        background:#222;
-    }
-
-    /* MINI GALLERY */
-    .mini-gallery{
-        display:flex;
-        gap:12px;
-        margin-top:50px;
-    }
-    .mini-gallery img{
-        width:95px;
-        height:95px;
-        border-radius:12px;
-        object-fit:cover;
-        cursor:pointer;
-        transition:.3s;
-    }
-    .mini-gallery img:hover{
-        transform:scale(1.05);
+        width:fit-content;
     }
 
 </style>
 </head>
 <body>
 
-<div class="anime-page">
-    <!-- LEFT IMAGE -->
-    <div class="left-img">
-        <img id="mainImage" src="" alt="Anime Poster">
+<div class="screen">
+
+    <!-- SEARCH BAR -->
+    <div class="search_box">
+        <input id="animeInput" placeholder="Type anime name — Example: One Piece"
+               onkeydown="if(event.key==='Enter') loadAnime(animeInput.value)">
     </div>
 
-    <!-- RIGHT DESCRIPTION -->
-    <div class="right-info">
-        <div class="site-logo">ANIME WEEKENDS</div>
-        <h1 id="title" class="title-text">Loading...</h1>
-        <p id="desc" class="desc-text">Fetching anime details...</p>
+    <!-- MAIN UI -->
+    <div class="content">
+        <div class="left-img"><img id="mainImg" src=""></div>
 
-        <button class="watch-btn">WATCH NOW</button>
-
-        <div class="mini-gallery" id="gallery"></div>
+        <div class="right-info">
+            <h1 id="title" class="title">Type Anime Name</h1>
+            <p id="desc" class="desc">The page updates automatically.</p>
+            <button class="watch-btn">WATCH NOW</button>
+        </div>
     </div>
+
 </div>
 
 
-<!-- JS FETCH (AniList API) -->
+<!-- API FETCH -->
 <script>
 async function loadAnime(name){
-    const query = `
-        query($search:String){
-            Media(search:$search, type:ANIME){
-                title { english romaji }
-                description
-                coverImage { extraLarge }
-                bannerImage
-            }
-        }`;
+    const q = `
+    query($search:String){
+        Media(search:$search,type:ANIME){
+            title{english romaji}
+            description
+            coverImage{extraLarge}
+            bannerImage
+        }
+    }`;
 
-    const req = await fetch("https://graphql.anilist.co",{
+    const res = await fetch("https://graphql.anilist.co",{
         method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body:JSON.stringify({query, variables:{search:name}})
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({query:q,variables:{search:name}})
     });
 
-    const data = await req.json();
-    const a = data.data.Media;
+    const a = (await res.json()).data.Media;
 
-    // Fill UI
     document.getElementById("title").innerText = a.title.english || a.title.romaji;
-    document.getElementById("desc").innerHTML = a.description.slice(0,400)+"...";
-    document.getElementById("mainImage").src = a.bannerImage || a.coverImage.extraLarge;
-
-    // gallery thumbnails
-    let g = document.getElementById("gallery");
-    g.innerHTML = `
-        <img src="${a.coverImage.extraLarge}">
-        <img src="${a.bannerImage || a.coverImage.extraLarge}">
-        <img src="${a.coverImage.extraLarge}">
-    `;
+    document.getElementById("desc").innerHTML = a.description.slice(0,650)+"...";
+    document.getElementById("mainImg").src = a.bannerImage || a.coverImage.extraLarge;
 }
-
-/* Change name here ✨ */
-loadAnime("Apothecary Diaries");
 </script>
 
 </body>
