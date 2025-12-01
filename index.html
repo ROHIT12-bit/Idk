@@ -14,7 +14,7 @@
         display:flex;
         justify-content:center;
         align-items:center;
-        height:100vh;
+        min-height:100vh;
     }
 
     .screen{
@@ -134,7 +134,6 @@
         .searchbar input{width:90%;}
         body{height:auto;}
     }
-
 </style>
 </head>
 <body>
@@ -153,11 +152,11 @@
 
         <div class="right">
             <h1 id="title">BotsKingdoms AnimeBot</h1>
-            <p id="desc">Type an anime name to load full details & download the poster image.</p>
+            <p id="desc">Type an anime name to load full details & download the poster image with text.</p>
 
             <div style="display:flex;flex-wrap:wrap;">
                 <button class="btn">WATCH NOW</button>
-                <a id="downloadLink" class="download-btn" download="anime_poster.jpg">DOWNLOAD IMAGE</a>
+                <button class="download-btn" onclick="downloadImageWithText()">DOWNLOAD IMAGE</button>
             </div>
         </div>
     </div>
@@ -165,8 +164,9 @@
     <div class="brand">Powered By BotsKingdoms 👑</div>
 </div>
 
-
 <script>
+let currentAnime = {};
+
 async function loadAnime(name){
     const q=`query($search:String){Media(search:$search,type:ANIME){
         title{english romaji} description coverImage{extraLarge} bannerImage
@@ -179,13 +179,75 @@ async function loadAnime(name){
     });
 
     let a=(await res.json()).data.Media;
+    currentAnime = a; // Store for download
 
     document.getElementById("title").innerText=a.title.english||a.title.romaji;
-    document.getElementById("desc").innerHTML=a.description.slice(0,800)+"...";
+    document.getElementById("desc").innerHTML=a.description ? a.description.slice(0,800)+"..." : "No description available.";
     document.getElementById("poster").src=a.bannerImage||a.coverImage.extraLarge;
+}
 
-    // Download Image Link Added ✔
-    document.getElementById("downloadLink").href=a.bannerImage||a.coverImage.extraLarge;
+// Download canvas with image + text
+function downloadImageWithText(){
+    if(!currentAnime || (!currentAnime.bannerImage && !currentAnime.coverImage)){
+        alert("No anime loaded!");
+        return;
+    }
+
+    const imgSrc = currentAnime.bannerImage || currentAnime.coverImage.extraLarge;
+    const title = currentAnime.title.english || currentAnime.title.romaji;
+    const desc = currentAnime.description ? currentAnime.description.slice(0,400) : "";
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 1920;
+    canvas.height = 1200;
+    const ctx = canvas.getContext("2d");
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = imgSrc;
+    img.onload = ()=>{
+        // Draw background image
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        // Draw overlay
+        ctx.fillStyle = "rgba(0,0,0,0.5)";
+        ctx.fillRect(0, canvas.height - 400, canvas.width, 400);
+
+        // Draw title
+        ctx.fillStyle = "#00ffff";
+        ctx.font = "bold 70px Poppins, sans-serif";
+        ctx.shadowColor = "cyan";
+        ctx.shadowBlur = 20;
+        ctx.fillText(title, 50, canvas.height - 300);
+
+        // Draw description
+        ctx.fillStyle = "#fff";
+        ctx.font = "28px Poppins, sans-serif";
+        ctx.shadowBlur = 0;
+
+        // Wrap text
+        const words = desc.split(" ");
+        let line = "";
+        let y = canvas.height - 230;
+        for(let n = 0; n < words.length; n++){
+            let testLine = line + words[n] + " ";
+            let metrics = ctx.measureText(testLine);
+            if(metrics.width > canvas.width - 100){
+                ctx.fillText(line, 50, y);
+                line = words[n] + " ";
+                y += 35;
+            } else {
+                line = testLine;
+            }
+        }
+        ctx.fillText(line, 50, y);
+
+        // Download
+        const link = document.createElement("a");
+        link.download = "anime_with_text.jpg";
+        link.href = canvas.toDataURL("image/jpeg", 1.0);
+        link.click();
+    }
 }
 </script>
 
