@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anime Showcase</title>
+
+<style>
+    body{
+        margin:0;
+        font-family: 'Poppins', sans-serif;
+        background:#fff6ee;  /* soft peach like screenshot */
+        overflow-x:hidden;
+    }
+
+    .anime-page{
+        display:flex;
+        height:100vh;
+        width:100%;
+    }
+
+    /* LEFT SIDE IMAGE */
+    .left-img{
+        width:50%;
+        height:100vh;
+    }
+    .left-img img{
+        width:100%;
+        height:100%;
+        object-fit:cover;
+    }
+
+    /* RIGHT SIDE CONTENT */
+    .right-info{
+        width:50%;
+        padding:80px 60px;
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
+    }
+
+    .site-logo{
+        font-size:22px;
+        font-weight:600;
+        letter-spacing:2px;
+        opacity:0.7;
+        margin-bottom:10px;
+    }
+
+    .title-text{
+        font-size:60px;
+        font-weight:900;
+        margin:0 0 25px;
+    }
+
+    .desc-text{
+        width:85%;
+        line-height:1.7;
+        font-size:18px;
+        opacity:0.7;
+        margin-bottom:35px;
+    }
+
+    /* BUTTON */
+    .watch-btn{
+        font-size:20px;
+        padding:14px 40px;
+        background:black;
+        color:white;
+        border:none;
+        border-radius:40px;
+        cursor:pointer;
+        width:max-content;
+        transition:.3s;
+        font-weight:600;
+    }
+    .watch-btn:hover{
+        background:#222;
+    }
+
+    /* MINI GALLERY */
+    .mini-gallery{
+        display:flex;
+        gap:12px;
+        margin-top:50px;
+    }
+    .mini-gallery img{
+        width:95px;
+        height:95px;
+        border-radius:12px;
+        object-fit:cover;
+        cursor:pointer;
+        transition:.3s;
+    }
+    .mini-gallery img:hover{
+        transform:scale(1.05);
+    }
+
+</style>
+</head>
+<body>
+
+<div class="anime-page">
+    <!-- LEFT IMAGE -->
+    <div class="left-img">
+        <img id="mainImage" src="" alt="Anime Poster">
+    </div>
+
+    <!-- RIGHT DESCRIPTION -->
+    <div class="right-info">
+        <div class="site-logo">ANIME WEEKENDS</div>
+        <h1 id="title" class="title-text">Loading...</h1>
+        <p id="desc" class="desc-text">Fetching anime details...</p>
+
+        <button class="watch-btn">WATCH NOW</button>
+
+        <div class="mini-gallery" id="gallery"></div>
+    </div>
+</div>
+
+
+<!-- JS FETCH (AniList API) -->
+<script>
+async function loadAnime(name){
+    const query = `
+        query($search:String){
+            Media(search:$search, type:ANIME){
+                title { english romaji }
+                description
+                coverImage { extraLarge }
+                bannerImage
+            }
+        }`;
+
+    const req = await fetch("https://graphql.anilist.co",{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify({query, variables:{search:name}})
+    });
+
+    const data = await req.json();
+    const a = data.data.Media;
+
+    // Fill UI
+    document.getElementById("title").innerText = a.title.english || a.title.romaji;
+    document.getElementById("desc").innerHTML = a.description.slice(0,400)+"...";
+    document.getElementById("mainImage").src = a.bannerImage || a.coverImage.extraLarge;
+
+    // gallery thumbnails
+    let g = document.getElementById("gallery");
+    g.innerHTML = `
+        <img src="${a.coverImage.extraLarge}">
+        <img src="${a.bannerImage || a.coverImage.extraLarge}">
+        <img src="${a.coverImage.extraLarge}">
+    `;
+}
+
+/* Change name here ✨ */
+loadAnime("Apothecary Diaries");
+</script>
+
+</body>
+</html>
